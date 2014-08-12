@@ -1,115 +1,146 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
+#include <stdlib.h> // EXIT_* macros, srand(), rand(), system()
+#include <ctype.h> // isdigit()
 #include <time.h>
+#include <stdbool.h> // Boolean stuff
 
-void print_table(int *numbers_ptr);
-void random_shuffle(int *numbers_ptr);
-void swap_variables(int *numbers_ptr, int user_input2);
-int compare_arrays(int *numbers_ptr);
+#include "colors.h"
+
+#define INDEX_SIZE 16
+
+void print_table(int* numbers_ptr);
+void random_shuffle(int* numbers_ptr);
+void swap_variables(int* numbers_ptr, int user_input2);
+bool swap_valid_number(int loc1, int loc2);
+bool array_in_order(int* numbers_ptr);
 
 int main(void)
 {
-	//0 in numbers[] will represent an empty space
-	int numbers[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0};
-	int *numbers_ptr;
-	int user_input2 = 0;	//user input after sanity check
-	char user_input[10];	//user input originally
-	
+	// Zero in the array represents an empty space
+	int numbers[INDEX_SIZE] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0};
+	int *numbers_ptr;    // A pointer to the numbers[] array
+	int user_input2 = 0; // User input after sanity check
+	char user_input[10]; // User input originally
+
 	numbers_ptr = numbers;
-	
+
 	srand(time(NULL));				//Seed: Timer to avoid repetitions@runtime
 	random_shuffle(numbers_ptr);	//Shuffle numbers[]
-	printf("Let's start a game!\n");
-	print_table(numbers_ptr);
-	
-	while(1)
-	{
-		printf("Enter a number: ");
-		fflush(stdout);
-		fgets(user_input, sizeof user_input, stdin);
-		sscanf(user_input, "%d", &user_input2);
-		
 
-		if(isdigit(*user_input)) {
+	while(1) {
+        print_table(numbers_ptr);
+		fflush(stdout);
+		fgets(user_input, sizeof(user_input), stdin);
+		sscanf(user_input, "%d", &user_input2);
+
+		if (isdigit(*user_input)) {
 			swap_variables(numbers_ptr, user_input2);
-			print_table(numbers_ptr);
-			
-			if(compare_arrays(numbers_ptr) == EXIT_SUCCESS) {
+			/* print_table(numbers_ptr); */
+
+			if (array_in_order(numbers_ptr)) {
 				printf("Congratulations. You have completed the game!\n");
 				break;
 			}
-		
 		}
-		
-		else if(*user_input == 'q')
-			break;
-		
-		else 
-			printf("You did not enter a number!\n");
-	}
 
-	return(EXIT_SUCCESS);
+		else if (*user_input == 'q')
+			break;
+		else
+			printf("You did not enter a number!\n");
+	} // End of while(1) loop
+	return EXIT_SUCCESS;
 }
 
-
-void print_table(int *numbers_ptr)
-{
+void print_table(int *numbers_ptr) {
+    /* system("clear"); */
+	printf("Let's start a game!\n");
 	int i;
-	for(i = 0; i < 16; i++) {
-		if(numbers_ptr[i] == 0)
+	for(i = 0; i < INDEX_SIZE; i++) {
+		if (numbers_ptr[i] == 0)
 			printf("    ");
-		else
+        else if (numbers_ptr[i] == i + 1) {
+            printf("%s", color_green);
+			printf("%4d", numbers_ptr[i]);
+            printf("%s", color_reset);
+        } else
 			printf("%4d", numbers_ptr[i]);
 		// i+1 fixes computations for formatting purposes
-		if((i + 1) % 4 == 0)
+		if ((i + 1) % 4 == 0)
 			printf("\n");
 	}
+    printf("Enter a number: ");
 }
 
+void random_shuffle(int *numbers_ptr) {
+    // Perform the shuffle between a randomly
+    // selected num on the rage [50, 100]
+    int i = 0, i2 = 0;
+    int zeros_index, swap;
+    int rand_num = 50 + rand() % 50;
+    int rand_num2 = 0;
 
-void swap_variables(int *numbers_ptr, int user_input2)
-{
-	int i,swap;
-	int loc1,loc2; //Store indexes that need swapping
-					// loc1 is 0 and loc2 is the user input.
-	
-	for(i = 0; i < 16; i++) {
-		if(numbers_ptr[i] == 0)
-			loc1 = i;
-		else if(numbers_ptr[i] == user_input2)
-			loc2 = i;
+    for (; i < rand_num; ++i) {
+        // Update zeros_index
+        for (i2 = 0; i2 < INDEX_SIZE; ++i2) {
+            if (numbers_ptr[i2] == 0)
+                zeros_index = i2;
+        }
+        // Update rand_num2
+        rand_num2 = 1 + rand() % 15;
+        // Get a random contiguous number. The var rand_num2, if valid, is the index
+        // of the array that is contiguous to the index where the value 0 is located at
+        if (swap_valid_number(zeros_index, rand_num2)) {
+            /*********************/
+            /* Code for swapping */
+            /*********************/
+            swap = numbers_ptr[zeros_index];
+            numbers_ptr[zeros_index] = numbers_ptr[rand_num2];
+            numbers_ptr[rand_num2] = swap;
+        }
+    }
+}
+
+void swap_variables(int *numbers_ptr, int user_input2) {
+	int i, swap;
+    // zeros_index is for storing the index where 0 is found
+    // inputs_index is for the index where user_input2 is found
+	int zeros_index, inputs_index;
+
+    // Grab the indexes for number 0 and user_input2
+	for (i = 0; i < INDEX_SIZE; i++) {
+		if (numbers_ptr[i] == 0)
+			zeros_index = i;
+		else if (numbers_ptr[i] == user_input2)
+			inputs_index = i;
 	}
+
 	// Make sure you can swap only with contigous numbers
-	if(loc2+1 == loc1 || loc2-1 == loc1 || loc2 + 4 == loc1 || loc2-4 == loc1){
-		swap = numbers_ptr[loc1];
-		numbers_ptr[loc1] = numbers_ptr[loc2];
-		numbers_ptr[loc2] = swap;
+	if (swap_valid_number(zeros_index, inputs_index)) {
+		swap = numbers_ptr[zeros_index];
+		numbers_ptr[zeros_index] = numbers_ptr[inputs_index];
+		numbers_ptr[inputs_index] = swap;
 	} else
 		printf("That move is not allowed\n");
 }
 
-void random_shuffle(int *numbers_ptr)
-{
-    /* TODO: Fix function so that only solvable games are generated */
-	int i;
-	int swaping_index,swap;
-
-	for(i = 0; i < 16; i++) {
-		swaping_index = (rand() % 15) + 1; //Choose an index randomly
-		swap = numbers_ptr[i];
-		numbers_ptr[i] = numbers_ptr[swaping_index];
-		numbers_ptr[swaping_index] = swap;
-	}
+bool swap_valid_number(int zero, int input) {
+    if (input < 0 && input > INDEX_SIZE)
+        return false;
+	// Make sure you can swap only with contigous numbers
+	if (input+1 == zero || input-1 == zero || input + 4 == zero || input-4 == zero) {
+        /* printf("%d +1/-1/+4/-4 = %d\n", input, zero); */
+        return true;
+    } else
+        return false;
 }
 
-int compare_arrays(int *numbers_ptr)
-{
-	int numbers_final[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0};
+// Determine if the game has been successfully completed
+bool array_in_order(int *numbers_ptr) {
+	int numbers_final[INDEX_SIZE] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0};
 	int i;
-	for(i = 0; i < 16; i++) {
-		if(numbers_final[i] != numbers_ptr[i])
-			return(1);
+	for (i = 0; i < INDEX_SIZE; i++) {
+		if (numbers_final[i] != numbers_ptr[i])
+			return false;
 	}
-	return(EXIT_SUCCESS);
+	return true;
 }
