@@ -1,10 +1,10 @@
+#include "libs/colors.h"
+
 #include <stdio.h>
 #include <stdlib.h> // EXIT_* macros, srand(), rand(), system()
 #include <ctype.h> // isdigit()
 #include <time.h>
 #include <stdbool.h> // Boolean stuff
-
-#include "colors.h"
 
 #define INDEX_SIZE 16
 
