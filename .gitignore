@@ -1,0 +1,2 @@
+# Do not track C compiled programs
+**/*.out
