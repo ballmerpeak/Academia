@@ -1,1 +1,1 @@
-This repository only contains code that was written for learning purposes. Said code is not useful in any real world scenario. Its only usefulness is for learning purposes.
+This repository contains code that was written for learning purposes. Needless to say, portability and optimization may be lacking (unless that was the learning goal of the program).

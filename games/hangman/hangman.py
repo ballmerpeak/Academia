@@ -50,12 +50,12 @@ def valid_input(secret_word, given_letters):
 def generate_secret_word():
     lines = 0
     try:
-        dictionary_file = open(".hangman.txt", "rt")
+        dictionary_file = open("hangman.txt", "rt")
         for line in dictionary_file:
             lines += 1
         dictionary_file.close()
         random_number = random.randint(1, lines)
-        random_line = linecache.getline('.hangman.txt', random_number)
+        random_line = linecache.getline('hangman.txt', random_number)
         return random_line.rstrip()
     except IOError:
         print("A secret word could not be chosen.")
